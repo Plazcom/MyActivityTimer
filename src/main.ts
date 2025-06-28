@@ -19,14 +19,42 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Vérification de la clé API
+const apiKey = process.env.BUNGIE_API_KEY;
+if (!apiKey) {
+  console.error('❌ ERREUR: Clé API Bungie manquante ! Vérifiez votre fichier .env');
+  process.exit(1);
+}
+console.log(`🔑 Clé API Bungie chargée: ${apiKey.substring(0, 8)}...`);
+
 // Services
-const bungieAPI = new BungieAPIService(process.env.BUNGIE_API_KEY || '');
+const bungieAPI = new BungieAPIService(apiKey);
 const activityTracker = new ActivityTracker(bungieAPI);
 const timerService = new TimerService();
 
 // Routes
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Test de la clé API
+app.get('/api/test', async (req, res) => {
+  try {
+    console.log('🧪 Test de la clé API...');
+    const response = await bungieAPI.searchPlayer('test', 3); // Test avec un nom bidon
+    res.json({ 
+      status: 'API_OK', 
+      message: 'Clé API fonctionnelle',
+      apiKey: apiKey.substring(0, 8) + '...'
+    });
+  } catch (error: any) {
+    console.error('❌ Test API échoué:', error.message);
+    res.status(500).json({ 
+      status: 'API_ERROR',
+      error: error.message,
+      apiKey: apiKey.substring(0, 8) + '...'
+    });
+  }
 });
 
 app.get('/api/player/:membershipType/:membershipId', async (req, res) => {

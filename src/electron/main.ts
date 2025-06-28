@@ -1,6 +1,29 @@
 import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import path from 'path';
 
+// Charger les variables d'environnement
+require('dotenv').config();
+
+// Configuration pour éviter les erreurs GPU
+if (process.env.ELECTRON_DISABLE_GPU === 'true') {
+  app.commandLine.appendSwitch('--disable-gpu');
+  app.commandLine.appendSwitch('--disable-gpu-sandbox');
+  console.log('🔧 GPU désactivé via configuration');
+}
+
+app.commandLine.appendSwitch('--disable-software-rasterizer');
+app.commandLine.appendSwitch('--disable-background-timer-throttling');
+app.commandLine.appendSwitch('--disable-backgrounding-occluded-windows');
+app.commandLine.appendSwitch('--disable-renderer-backgrounding');
+app.commandLine.appendSwitch('--disable-features', 'TranslateUI');
+app.commandLine.appendSwitch('--disable-ipc-flooding-protection');
+
+// Réduire les erreurs de sécurité en mode développement
+if (process.env.NODE_ENV === 'development') {
+  app.commandLine.appendSwitch('--ignore-certificate-errors');
+  app.commandLine.appendSwitch('--ignore-ssl-errors');
+}
+
 let mainWindow: BrowserWindow | null = null;
 let overlayWindow: BrowserWindow | null = null;
 
@@ -11,18 +34,28 @@ const createMainWindow = (): void => {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      enableRemoteModule: true
+      backgroundThrottling: false,
+      offscreen: false
     },
     icon: path.join(__dirname, '../assets/icon.png'),
-    title: 'Destiny 2 Overlay Timer - Configuration'
+    title: 'Destiny 2 Overlay Timer - Configuration',
+    show: false // Masquer jusqu'à ce que ready-to-show
   });
 
   // En développement, charger depuis le serveur local
   if (process.env.NODE_ENV === 'development') {
     mainWindow.loadURL('http://localhost:3000');
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    mainWindow.loadFile(path.join(__dirname, 'index.html'));
   }
+
+  // Afficher la fenêtre quand elle est prête
+  mainWindow.once('ready-to-show', () => {
+    if (mainWindow) {
+      mainWindow.show();
+      console.log('🖥️ Fenêtre principale affichée');
+    }
+  });
 
   // Ouvrir les outils développeur en mode dev
   if (process.env.NODE_ENV === 'development') {
@@ -51,7 +84,8 @@ const createOverlayWindow = (): void => {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      enableRemoteModule: true
+      backgroundThrottling: false,
+      offscreen: false
     },
     show: false // Caché par défaut
   });
@@ -60,7 +94,7 @@ const createOverlayWindow = (): void => {
   if (process.env.NODE_ENV === 'development') {
     overlayWindow.loadURL('http://localhost:3000/overlay');
   } else {
-    overlayWindow.loadFile(path.join(__dirname, '../dist/overlay.html'));
+    overlayWindow.loadFile(path.join(__dirname, 'overlay.html'));
   }
 
   // Rendre la fenêtre cliquable à travers (passthrough)
@@ -170,4 +204,28 @@ if (!gotTheLock) {
       mainWindow.focus();
     }
   });
+}
+
+// Gestion des erreurs GPU et autres problèmes Electron
+app.on('gpu-process-crashed', (event, killed) => {
+  console.log('⚠️ Processus GPU crashé, redémarrage automatique...');
+  // L'application continue généralement de fonctionner avec le rendu logiciel
+});
+
+app.on('renderer-process-crashed', (event, webContents, killed) => {
+  console.log('⚠️ Processus de rendu crashé');
+  // Recharger la fenêtre si nécessaire
+  if (webContents && !webContents.isDestroyed()) {
+    webContents.reload();
+  }
+});
+
+app.on('child-process-gone', (event, details) => {
+  console.log('⚠️ Processus enfant arrêté:', details.type, details.reason);
+});
+
+// Désactiver l'accélération matérielle si des problèmes GPU persistent
+if (process.argv.includes('--disable-hardware-acceleration')) {
+  app.disableHardwareAcceleration();
+  console.log('🔧 Accélération matérielle désactivée');
 }

@@ -8,6 +8,7 @@
     "start": "node dist/main.js",
     "dev": "ts-node src/main.ts",
     "electron": "electron dist/electron/main.js",
+    "electron:debug": "electron dist/electron/main.js --enable-logging --disable-hardware-acceleration",
     "dev-electron": "electron src/electron/main.ts",
     "build-electron": "tsc && electron-builder",
     "test": "jest"

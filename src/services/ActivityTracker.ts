@@ -103,9 +103,9 @@ export class ActivityTracker {
         config.membershipType,
         config.membershipId,
         config.characterId
-      );
+      ) ?? null;
 
-      const previousActivity = this.currentActivities.get(playerId);
+      const previousActivity = this.currentActivities.get(playerId) ?? null;
       
       // Vérifier s'il y a eu un changement d'activité
       if (this.hasActivityChanged(previousActivity, currentActivity)) {

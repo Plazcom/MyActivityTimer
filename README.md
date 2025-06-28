@@ -81,6 +81,7 @@ npm start
    PORT=3000
    NODE_ENV=development
    ```
+   ⚠️ **Important** : Créez un fichier `.env` à la racine du projet (pas `.env.example`)
 
 3. **Trouver votre ID de compte** :
    - Connectez-vous à [bungie.net](https://www.bungie.net)
@@ -223,10 +224,38 @@ L'overlay peut être personnalisé en modifiant :
 - ✅ Assurez-vous que votre ID de compte est correct  
 - ✅ Vérifiez votre connexion internet
 
+### 🔑 Erreur "ApiKeyMissingFromRequest"
+```bash
+# Si vous voyez cette erreur, vérifiez :
+# 1. Le fichier .env existe à la racine du projet
+ls .env
+
+# 2. La clé API est définie dans .env
+cat .env | grep BUNGIE_API_KEY
+
+# 3. Redémarrez l'application après avoir modifié .env
+npm run build && npm start
+```
+
 ### 👻 L'overlay ne s'affiche pas
 - ✅ Vérifiez que le serveur API fonctionne
 - ✅ Relancez l'application Electron
 - ✅ Vérifiez les permissions d'affichage
+
+### 🖥️ Erreurs GPU Electron
+```powershell
+# Si vous voyez des erreurs GPU comme "GPU process exited unexpectedly"
+# Utilisez la commande de debug qui désactive l'accélération matérielle :
+npm run electron:debug
+
+# Ou modifiez .env pour désactiver le GPU en permanence :
+ELECTRON_DISABLE_GPU=true
+```
+
+### 💻 Performance et stabilité Electron
+- ✅ Utilisez `npm run electron:debug` pour une meilleure stabilité
+- ✅ Fermez les autres applications gourmandes en GPU
+- ✅ Mettez à jour vos pilotes graphiques
 
 ### 🌐 WebSocket ne se connecte pas
 - ✅ Vérifiez que le port 3000 n'est pas bloqué

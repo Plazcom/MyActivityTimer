@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Destiny 2 Timer Overlay</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: transparent;
+            color: white;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .overlay-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .timer-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.6));
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 250px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .timer-overlay.active {
+            border-color: rgba(0, 184, 148, 0.6);
+            box-shadow: 0 8px 32px rgba(0, 184, 148, 0.2);
+        }
+
+        .timer-overlay.warning {
+            border-color: rgba(255, 193, 7, 0.6);
+            box-shadow: 0 8px 32px rgba(255, 193, 7, 0.2);
+        }
+
+        .timer-overlay.danger {
+            border-color: rgba(220, 53, 69, 0.6);
+            box-shadow: 0 8px 32px rgba(220, 53, 69, 0.2);
+        }
+
+        .timer-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #ffd700;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .timer-display {
+            font-size: 1.8rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            color: #00b894;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            line-height: 1;
+        }
+
+        .timer-display.warning {
+            color: #ffc107;
+        }
+
+        .timer-display.danger {
+            color: #dc3545;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00b894, #00a085);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-bar.warning {
+            background: linear-gradient(90deg, #ffc107, #ff9800);
+        }
+
+        .progress-bar.danger {
+            background: linear-gradient(90deg, #dc3545, #c82333);
+        }
+
+        .timer-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .timer-remaining {
+            font-weight: 500;
+        }
+
+        .timer-percentage {
+            font-weight: 600;
+        }
+
+        .no-timers {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            padding: 20px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .multiple-timers {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .timer-item {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.5));
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .timer-item .timer-title {
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .timer-item .timer-display {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .timer-item .progress-container {
+            height: 4px;
+            margin-bottom: 5px;
+        }
+
+        .timer-item .timer-info {
+            font-size: 0.7rem;
+        }
+
+        /* Animations d'entrée */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        /* Responsive pour différentes tailles d'écran */
+        @media (max-width: 1366px) {
+            .timer-overlay {
+                min-width: 220px;
+                padding: 12px;
+            }
+            
+            .timer-display {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .timer-overlay {
+                min-width: 200px;
+                padding: 10px;
+            }
+            
+            .timer-display {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay-container">
+        <div id="timerOverlay" class="timer-overlay fade-in" style="display: none;">
+            <!-- Contenu pour timer unique -->
+            <div id="singleTimer" class="single-timer" style="display: none;">
+                <div class="timer-title" id="singleTimerTitle">Activité</div>
+                <div class="timer-display" id="singleTimerDisplay">00:00</div>
+                <div class="progress-container" id="singleProgressContainer" style="display: none;">
+                    <div class="progress-bar" id="singleProgressBar" style="width: 0%;"></div>
+                </div>
+                <div class="timer-info" id="singleTimerInfo" style="display: none;">
+                    <span class="timer-remaining" id="singleTimerRemaining">Temps restant: --:--</span>
+                    <span class="timer-percentage" id="singleTimerPercentage">0%</span>
+                </div>
+            </div>
+
+            <!-- Contenu pour multiples timers -->
+            <div id="multipleTimers" class="multiple-timers" style="display: none;">
+                <!-- Les timers multiples seront ajoutés ici dynamiquement -->
+            </div>
+
+            <!-- Message quand aucun timer -->
+            <div id="noTimers" class="no-timers">
+                <div>⏰ Aucun timer actif</div>
+                <div style="font-size: 0.7rem; margin-top: 5px;">Démarrez une activité pour voir le timer</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/overlay.js"></script>
+</body>
+</html>

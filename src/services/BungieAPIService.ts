@@ -55,12 +55,17 @@ export class BungieAPIService {
 
   async getPlayer(membershipType: string, membershipId: string): Promise<any> {
     try {
+      console.log(`🔍 Recherche du profil: membershipType=${membershipType}, membershipId=${membershipId}`);
+      
       const response = await this.apiClient.get(
         `/Destiny2/${membershipType}/Profile/${membershipId}/?components=100,200`
       );
 
+      console.log(`✅ Réponse API reçue: status=${response.status}, errorCode=${response.data.ErrorCode}`);
+
       if (response.data.ErrorCode !== 1) {
-        throw new Error(`Erreur API Bungie: ${response.data.Message}`);
+        console.error(`❌ Erreur API Bungie: Code=${response.data.ErrorCode}, Message=${response.data.Message}`);
+        throw new Error(`Erreur API Bungie (${response.data.ErrorCode}): ${response.data.Message}`);
       }
 
       return response.data.Response;
